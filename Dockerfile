@@ -1,11 +1,18 @@
 FROM python:3.11-slim
 
-WORKDIR /code
+ARG http_proxy
+ARG https_proxy
 
-COPY ./requirements.txt /code/requirements.txt
+ENV http_proxy=$http_proxy
+ENV https_proxy=$https_proxy
 
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+WORKDIR /app
+COPY requirements.txt .
 
-COPY ./ /code
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "main.py"]
+COPY . .
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
