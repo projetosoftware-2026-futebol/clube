@@ -33,23 +33,16 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
     db.init_app(app)
-
-    # ── Ligas disponíveis ──────────────────────────────────────────────────────
 
     @app.route("/leagues", methods=["GET"])
     def get_leagues():
         return jsonify({"leagues": LEAGUES}), 200
 
-    # ── GET /clube/get  →  lista todos os clubes ───────────────────────────────
-
     @app.route("/clube/get", methods=["GET"])
     def get_clubs():
         clubs = Club.query.all()
         return jsonify([c.to_dict() for c in clubs]), 200
-
-    # ── GET /clube/get/<id>  →  detalhe do clube com jogadores ────────────────
 
     @app.route("/clube/get/<int:club_id>", methods=["GET"])
     def get_club(club_id):
@@ -57,8 +50,6 @@ def create_app(test_config=None):
         if not club:
             return jsonify({"error": "Club not found"}), 404
         return jsonify(club.to_dict_full()), 200
-
-    # ── POST /clube/create  →  cria um clube ──────────────────────────────────
 
     @app.route("/clube/create", methods=["POST"])
     def create_club():
@@ -69,18 +60,15 @@ def create_app(test_config=None):
 
         if not name or not league:
             return jsonify({"error": "name and league are required"}), 400
-
         if league not in LEAGUES:
             return jsonify({"error": "Invalid league", "available": LEAGUES}), 400
-
         if Club.query.filter_by(name=name).first():
             return jsonify({"error": "Club name already exists"}), 409
 
         file = request.files.get("image")
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            file.save(filepath)
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             image_url = f"/uploads/{filename}"
 
         try:
@@ -91,8 +79,6 @@ def create_app(test_config=None):
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
-
-    # ── PUT /clube/update/<id>  →  atualiza clube ─────────────────────────────
 
     @app.route("/clube/update/<int:club_id>", methods=["PUT"])
     def update_club(club_id):
@@ -107,15 +93,13 @@ def create_app(test_config=None):
 
         if league and league not in LEAGUES:
             return jsonify({"error": "Invalid league", "available": LEAGUES}), 400
-
         if name and name != club.name and Club.query.filter_by(name=name).first():
             return jsonify({"error": "Club name already exists"}), 409
 
         file = request.files.get("image")
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            file.save(filepath)
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             image_url = f"/uploads/{filename}"
 
         try:
@@ -133,14 +117,11 @@ def create_app(test_config=None):
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
 
-    # ── DELETE /clube/delete/<id>  →  deleta clube ────────────────────────────
-
     @app.route("/clube/delete/<int:club_id>", methods=["DELETE"])
     def delete_club(club_id):
         club = db.session.get(Club, club_id)
         if not club:
             return jsonify({"error": "Club not found"}), 404
-
         try:
             db.session.delete(club)
             db.session.commit()
@@ -149,17 +130,12 @@ def create_app(test_config=None):
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
 
-    # ── GET /clube/<id>/players  →  jogadores do clube ────────────────────────
-
     @app.route("/clube/<int:club_id>/players", methods=["GET"])
     def get_club_players(club_id):
         club = db.session.get(Club, club_id)
         if not club:
             return jsonify({"error": "Club not found"}), 404
         return jsonify({"club": club.name, "players": [p.to_dict() for p in club.players]}), 200
-
-    # ── POST /clube/buy  →  compra jogador da API de jogadores ───────────────
-    # Body: { "club_id": 1, "player_id": 10 }
 
     @app.route("/clube/buy", methods=["POST"])
     def buy_player():
@@ -173,7 +149,6 @@ def create_app(test_config=None):
         club = db.session.get(Club, club_id)
         if not club:
             return jsonify({"error": "Club not found"}), 404
-
         if ClubPlayer.query.filter_by(club_id=club_id, player_id=player_id).first():
             return jsonify({"error": "Player already in this club"}), 409
 
@@ -192,41 +167,21 @@ def create_app(test_config=None):
             return jsonify({"error": "Player is not available for transfer"}), 400
 
         price = float(player_data.get("value", 0))
-
         if club.budget < price:
-            return jsonify({
-                "error": "Insufficient budget",
-                "budget": club.budget,
-                "player_price": price,
-            }), 400
+            return jsonify({"error": "Insufficient budget", "budget": club.budget, "player_price": price}), 400
 
         try:
             club.budget -= price
-            cp = ClubPlayer(club_id=club_id, player_id=player_id, purchase_price=price)
-            db.session.add(cp)
+            db.session.add(ClubPlayer(club_id=club_id, player_id=player_id, purchase_price=price))
             db.session.commit()
-
             try:
-                requests.patch(
-                    f"{PLAYERS_API_URL}/players/{player_id}",
-                    json={"club_id": club_id, "available": False},
-                    timeout=5,
-                )
+                requests.patch(f"{PLAYERS_API_URL}/players/{player_id}", json={"club_id": club_id, "available": False}, timeout=5)
             except Exception:
                 pass
-
-            return jsonify({
-                "message": "Player bought successfully",
-                "player_id": player_id,
-                "price_paid": price,
-                "remaining_budget": club.budget,
-            }), 200
+            return jsonify({"message": "Player bought successfully", "player_id": player_id, "price_paid": price, "remaining_budget": club.budget}), 200
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
-
-    # ── POST /clube/sell  →  vende jogador de volta ao mercado ───────────────
-    # Body: { "club_id": 1, "player_id": 10 }
 
     @app.route("/clube/sell", methods=["POST"])
     def sell_player():
@@ -257,22 +212,11 @@ def create_app(test_config=None):
             club.budget += sell_price
             db.session.delete(cp)
             db.session.commit()
-
             try:
-                requests.patch(
-                    f"{PLAYERS_API_URL}/players/{player_id}",
-                    json={"club_id": None, "available": True},
-                    timeout=5,
-                )
+                requests.patch(f"{PLAYERS_API_URL}/players/{player_id}", json={"club_id": None, "available": True}, timeout=5)
             except Exception:
                 pass
-
-            return jsonify({
-                "message": "Player sold successfully",
-                "player_id": player_id,
-                "sell_price": sell_price,
-                "new_budget": club.budget,
-            }), 200
+            return jsonify({"message": "Player sold successfully", "player_id": player_id, "sell_price": sell_price, "new_budget": club.budget}), 200
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": str(e)}), 500

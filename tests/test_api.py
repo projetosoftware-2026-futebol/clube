@@ -9,8 +9,6 @@ def _mock_player(available=True, value=1_000_000):
     return mock
 
 
-# ── Ligas ──────────────────────────────────────────────────────────────────────
-
 def test_get_leagues(client):
     response = client.get("/leagues")
     assert response.status_code == 200
@@ -18,14 +16,10 @@ def test_get_leagues(client):
     assert len(response.get_json()["leagues"]) > 0
 
 
-# ── Clube não encontrado ───────────────────────────────────────────────────────
-
 def test_get_clube_404(client):
     response = client.get("/clube/get/999")
     assert response.status_code == 404
 
-
-# ── Criar, buscar e deletar clube ─────────────────────────────────────────────
 
 def test_create_and_get_clube_and_delete_clube(client):
     create_response = client.post("/clube/create", json={
@@ -58,8 +52,6 @@ def test_create_and_get_clube_and_delete_clube(client):
     assert get_after_delete.status_code == 404
 
 
-# ── Criar e deletar clube ─────────────────────────────────────────────────────
-
 def test_create_and_delete_clube(client):
     create_response = client.post("/clube/create", json={
         "name": "FC Maria",
@@ -75,8 +67,6 @@ def test_create_and_delete_clube(client):
     get_response = client.get(f"/clube/get/{club_id}")
     assert get_response.status_code == 404
 
-
-# ── Criar dois clubes, listar e deletar ambos ─────────────────────────────────
 
 def test_create_two_clubes_and_list_and_delete_both(client):
     response1 = client.post("/clube/create", json={
@@ -111,8 +101,6 @@ def test_create_two_clubes_and_list_and_delete_both(client):
     assert final_list.get_json() == []
 
 
-# ── Criar clube com liga inválida ─────────────────────────────────────────────
-
 def test_create_clube_invalid_league(client):
     response = client.post("/clube/create", json={
         "name": "FC Invalido",
@@ -122,16 +110,12 @@ def test_create_clube_invalid_league(client):
     assert "available" in response.get_json()
 
 
-# ── Criar clube com nome duplicado ────────────────────────────────────────────
-
 def test_create_clube_duplicate_name(client):
     client.post("/clube/create", json={"name": "FC Dup", "league": "Ligue 1"})
 
     response = client.post("/clube/create", json={"name": "FC Dup", "league": "Ligue 1"})
     assert response.status_code == 409
 
-
-# ── Atualizar clube ───────────────────────────────────────────────────────────
 
 def test_create_and_update_clube(client):
     create_response = client.post("/clube/create", json={
@@ -149,8 +133,6 @@ def test_create_and_update_clube(client):
     get_response = client.get(f"/clube/get/{club_id}")
     assert get_response.get_json()["budget"] == 99_000_000
 
-
-# ── Comprar jogador e verificar orçamento ─────────────────────────────────────
 
 def test_buy_player_and_check_budget(client):
     create_response = client.post("/clube/create", json={
@@ -174,8 +156,6 @@ def test_buy_player_and_check_budget(client):
     assert players_response.status_code == 200
     assert len(players_response.get_json()["players"]) == 1
 
-
-# ── Comprar e vender jogador ──────────────────────────────────────────────────
 
 def test_buy_and_sell_player(client):
     create_response = client.post("/clube/create", json={
@@ -202,8 +182,6 @@ def test_buy_and_sell_player(client):
     assert len(players_response.get_json()["players"]) == 0
 
 
-# ── Comprar com orçamento insuficiente ────────────────────────────────────────
-
 def test_buy_player_insufficient_budget(client):
     create_response = client.post("/clube/create", json={
         "name": "FC Poor",
@@ -219,8 +197,6 @@ def test_buy_player_insufficient_budget(client):
     assert response.status_code == 400
     assert "Insufficient budget" in response.get_json()["error"]
 
-
-# ── Vender jogador que não está no clube ──────────────────────────────────────
 
 def test_sell_player_not_in_clube(client):
     create_response = client.post("/clube/create", json={
