@@ -12,7 +12,7 @@ def _mock_player(available=True, value=1_000_000):
 # ── Ligas ──────────────────────────────────────────────────────────────────────
 
 def test_get_leagues(client):
-    response = client.get("/leagues")
+    response = client.get("/clube/leagues")
     assert response.status_code == 200
     assert "leagues" in response.get_json()
     assert len(response.get_json()["leagues"]) > 0

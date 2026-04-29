@@ -38,7 +38,7 @@ def create_app(test_config=None):
 
     # ── Ligas disponíveis ──────────────────────────────────────────────────────
 
-    @app.route("/leagues", methods=["GET"])
+    @app.route("/clube/leagues", methods=["GET"])
     def get_leagues():
         return jsonify({"leagues": LEAGUES}), 200
 
