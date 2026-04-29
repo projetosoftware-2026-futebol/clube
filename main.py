@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from db import db
 from models import Club, ClubPlayer, LEAGUES
 
-PLAYERS_API_URL = os.environ.get("PLAYERS_API_URL", "http://localhost:5002")
+PLAYERS_API_URL = os.environ.get("JOGADOR_URL", "http://localhost:5002")
 UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
@@ -285,5 +285,5 @@ def create_app(test_config=None):
 
 if __name__ == "__main__":
     app = create_app()
-    port = int(os.environ.get("PORT", 5001))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
