@@ -188,10 +188,10 @@ def create_app(test_config=None):
         except Exception as e:
             return jsonify({"error": f"Players API error: {str(e)}"}), 502
 
-        if not player_data.get("available", True):
+        if player_data.get("status") != "DISPONIVEL":
             return jsonify({"error": "Player is not available for transfer"}), 400
 
-        price = float(player_data.get("value", 0))
+        price = float(player_data.get("valor", 0))
 
         if club.budget < price:
             return jsonify({
@@ -207,9 +207,9 @@ def create_app(test_config=None):
             db.session.commit()
 
             try:
-                requests.patch(
-                    f"{PLAYERS_API_URL}/players/{player_id}",
-                    json={"club_id": club_id, "available": False},
+                requests.post(
+                    f"{PLAYERS_API_URL}/players/{player_id}/buy",
+                    json={"clube_id": club_id},
                     timeout=5,
                 )
             except Exception:
@@ -249,7 +249,7 @@ def create_app(test_config=None):
         try:
             response = requests.get(f"{PLAYERS_API_URL}/players/{player_id}", timeout=5)
             if response.status_code == 200:
-                sell_price = float(response.json().get("value", cp.purchase_price))
+                sell_price = float(response.json().get("valor", cp.purchase_price))
         except Exception:
             pass
 
@@ -259,9 +259,8 @@ def create_app(test_config=None):
             db.session.commit()
 
             try:
-                requests.patch(
-                    f"{PLAYERS_API_URL}/players/{player_id}",
-                    json={"club_id": None, "available": True},
+                requests.post(
+                    f"{PLAYERS_API_URL}/players/{player_id}/sell",
                     timeout=5,
                 )
             except Exception:
