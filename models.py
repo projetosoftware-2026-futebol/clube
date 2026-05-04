@@ -35,6 +35,7 @@ class Club(db.Model):
             "league": self.league,
             "budget": self.budget,
             "player_count": len(self.players),
+            "player_ids": [p.player_id for p in self.players],
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
