@@ -8,6 +8,7 @@ def app():
     app = create_app({
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "ALLOW_INSECURE_AUTH_HEADERS": True,
     })
 
     with app.app_context():
