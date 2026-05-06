@@ -20,6 +20,7 @@ class Club(db.Model):
     image_url = db.Column(db.String(500))
     league = db.Column(db.String(100), nullable=False)
     budget = db.Column(db.Float, nullable=False, default=10_000_000.0)
+    owner_user_id = db.Column(db.String(255), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
