@@ -90,14 +90,20 @@ def create_app(test_config=None):
         return None
 
     def auth0_issuer_and_audience():
-        domain = config_or_env("AUTH0_DOMAIN") or config_or_env("VITE_AUTH0_DOMAIN")
+        issuer = (
+            config_or_env("AUTH0_ISSUER")
+            or config_or_env("AUTH0_DOMAIN")
+            or config_or_env("VITE_AUTH0_DOMAIN")
+        )
         audience = config_or_env("AUTH0_AUDIENCE") or config_or_env("VITE_AUTH0_AUDIENCE")
 
-        if not domain:
+        if not issuer:
             return None, audience
 
-        domain = domain.rstrip("/")
-        issuer = f"{domain}/" if domain.startswith("http") else f"https://{domain}/"
+        issuer = issuer.rstrip("/")
+        if not issuer.startswith("http"):
+            issuer = f"https://{issuer}"
+        issuer = f"{issuer}/"
         return issuer, audience
 
     def verified_user_id_from_token(token):
